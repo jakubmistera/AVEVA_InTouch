@@ -1,0 +1,127 @@
+{ >>>>>> SEKCJA 1: TYLKO AUTO (Ruch taśmy i Automatyka) <<<<<< }
+{ To działa tylko jak wciśniesz START i masz tryb AUTO }
+
+IF Sys_Start == 1 AND Sys_Auto == 1 THEN
+    
+    { Ruch taśmy - TYLKO jeśli nie tniemy }
+    IF Is_Cutting == 0 THEN
+        Pos_Main = Pos_Main + 1;
+    ENDIF;
+
+    { --- NOWE: BILANS MASY (WEJŚCIE) --- }
+    { Zliczamy 1kg surowca tuż przed wjazdem pod piłę (poz. 45) }
+    IF Pos_Main == 45 AND Is_Cutting == 0 THEN
+        Mass_Total_In = Mass_Total_In + 1.0;
+    ENDIF;
+
+    { Automatyka: Cięcie }
+    IF Pos_Main == 50 AND Is_Cutting == 0 AND Has_Debris == 0 THEN
+        Is_Cutting = 1;
+        IF Next_Is_Short == 0 THEN Length_Current = 9.0; Next_Is_Short = 1;
+        ELSE Length_Current = 7.0; Next_Is_Short = 0; ENDIF;
+    ENDIF;
+
+    { Automatyka: Dmuchawa }
+    IF Pos_Main >= 100 AND Pos_Main <= 105 THEN Vis_Blower_Active = 1; ENDIF;
+    IF Pos_Main == 106 THEN Vis_Blower_Active = 0; ENDIF;
+
+    { Automatyka: Kamera }
+    IF Pos_Main == 125 AND Length_Current == 7.0 THEN
+         Vis_Vision_Active = 1;
+         Vis_Sorter_Gate = 1;
+    ENDIF;
+    IF Pos_Main == 135 THEN Vis_Vision_Active = 0; ENDIF;
+
+ENDIF;
+
+{ >>> SEKCJA 2: RZECZY, KTÓRE DZIAŁAJĄ ZAWSZE (AUTO I MANUAL) <<< }
+{ 1. Animacja Cięcia (Musi działać też w manualu po kliknięciu przycisku) }
+IF Is_Cutting == 1 THEN
+    Cutter_Progress = Cutter_Progress + 2; 
+    IF Cutter_Progress >= 100 THEN
+        Is_Cutting = 0;       
+        Cutter_Progress = 0;  
+        Has_Debris = 1;       
+    ENDIF;
+ENDIF;
+
+{ 2. Fizyka Odpadów }
+IF Vis_Blower_Active == 1 AND (Pos_Main >= 100 AND Pos_Main <= 115) THEN
+    Pos_Drop = Pos_Drop + 20;
+    IF Pos_Drop >= 100 AND Has_Debris == 1 THEN
+        Has_Debris = 0;
+        Weight_Waste = Weight_Waste + 0.1;
+    ENDIF;
+ENDIF;
+IF Vis_Blower_Active == 0 THEN Pos_Drop = 0; ENDIF;
+
+{ >>>>>> SEKCJA 3: KONTROLA BŁĘDÓW (Bardzo ważne!) <<<<<< }
+{ Błąd Odpadów (Pozycja 120) }
+IF Pos_Main == 120 AND Has_Debris == 1 THEN
+    Warning_Debris = 1;
+ENDIF;
+
+{ Błąd Sortownika (Pozycja 155) }
+IF Pos_Main == 155 THEN
+    { Błąd A: 7cm i zamknięte }
+    IF Length_Current == 7.0 AND Vis_Sorter_Gate == 0 THEN
+        Alarm_Wrong_Sort = 1;
+        Sys_Start = 0; 
+    ENDIF;
+    { Błąd B: 9cm i otwarte }
+    IF Length_Current == 9.0 AND Vis_Sorter_Gate == 1 THEN
+        Alarm_Wrong_Sort = 1;
+        Sys_Start = 0; 
+    ENDIF;
+ENDIF;
+
+{ >>>>>> SEKCJA 4: FIZYKA RUCHU I RESET <<<<<< }
+{ Ruch po łuku }
+IF Pos_Main > 150 THEN
+    IF Length_Current == 7.0 THEN
+        Pos_Sort_Y = ((Pos_Main - 150) * (Pos_Main - 150)) / 10;
+    ENDIF;
+ENDIF;
+
+{ Reset Pętli i Zliczanie Końcowe }
+IF Pos_Main > 230 THEN
+    
+    { --- NOWE: BILANS MASY (WYJŚCIE) --- }
+    IF Length_Current == 7.0 THEN 
+        Cnt_ProductB_7cm = Cnt_ProductB_7cm + 1;
+        
+        { Dla 7cm: 0.7kg produktu, 0.3kg odpadu }
+        Mass_Total_Prod = Mass_Total_Prod + 0.7;
+        Mass_Total_Waste_Sum = Mass_Total_Waste_Sum + 0.3;
+        
+    ELSE 
+        Cnt_ProductA_9cm = Cnt_ProductA_9cm + 1; 
+        
+        { Dla 9cm: 0.9kg produktu, 0.1kg odpadu }
+        Mass_Total_Prod = Mass_Total_Prod + 0.9;
+        Mass_Total_Waste_Sum = Mass_Total_Waste_Sum + 0.1;
+    ENDIF;
+
+    IF Cnt_ProductA_9cm >= 10 THEN Pack_Ready_9cm = 1; ENDIF;
+    IF Cnt_ProductB_7cm >= 10 THEN Pack_Ready_7cm = 1; ENDIF;
+
+    Pos_Main = 0;
+    Pos_Sort_Y = 0;
+    Length_Current = 10.0;
+    
+    Vis_Sorter_Gate = 0;
+    Vis_Vision_Active = 0;
+    Has_Debris = 0;
+    Pos_Drop = 0;
+    Vis_Blower_Active = 0; 
+    
+    IF Sys_Auto == 0 THEN Pos_Main = 0; ENDIF;
+ENDIF;
+
+{ Alarm Kosza }
+IF Weight_Waste >= 10 THEN
+    Alarm_Waste_Full = 1;
+    Sys_Start = 0;
+ELSE
+    Alarm_Waste_Full = 0;
+ENDIF;
