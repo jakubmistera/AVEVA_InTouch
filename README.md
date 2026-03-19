@@ -19,6 +19,7 @@ Zaprojektowanie kompletnego interfejsu HMI/SCADA dla symulowanego procesu przemy
 * **Integracja chmurowa (Cloud Computing):** Bezpieczne połączenie lokalnego systemu SCADA z chmurą AVEVA Insight. Umożliwiło to zdalny podgląd pracy instalacji, śledzenie wskaźników KPI i analizę danych z poziomu dowolnej przeglądarki internetowej.
 
 ## 📁 Zawartość repozytorium
+* `Fragment skryptu.txt` - Fragment Skryptu Głównego (Ruch i Logika Błędów).
 * `README.md` - szczegółowy opis wdrożonego systemu i zrealizowanych funkcji.
 * `images/` - galeria zrzutów ekranu potwierdzająca działanie poszczególnych modułów systemu.
 
@@ -32,15 +33,6 @@ Zaprojektowanie kompletnego interfejsu HMI/SCADA dla symulowanego procesu przemy
 
 ### Panel analizy trendów (AVEVA InTouch)
 <img width="647" height="375" alt="image" src="https://github.com/user-attachments/assets/c1abd439-ccf6-4514-a977-13684925034f" />
-
-### Analiza danych i monitoring w chmurze (AVEVA Insight)
-![AVEVA Insight Dashboard](images/insight_dashboard.jpg)
-
-### Trendy historyczne (Wonderware Historian)
-![Wykresy Historian](images/historian_trends.jpg)
-
-### Zarządzanie alarmami
-![Zarządzanie alarmami](images/alarms_window.jpg)
 
 ---
 *Projekt zrealizowany w ramach zajęć laboratoryjnych na Politechnice Warszawskiej (Kierunek: Automatyzacja i Robotyzacja Procesów Produkcyjnych). Projekt zespołowy.*
